@@ -7,7 +7,6 @@
    ============================================ */
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getFirestore,
   collection,
@@ -33,8 +32,8 @@ const firebaseConfig = {
   projectId: "diplom-7ee78",
   storageBucket: "diplom-7ee78.firebasestorage.app",
   messagingSenderId: "764395799183",
-  appId: "1:764395799183:web:b2122d37f4121dff87a6fa",
-  measurementId: "G-ZF2TVKPJ43"
+  appId: "1:764395799183:web:8f7fea15fa18a62687a6fa",
+  measurementId: "G-GCJ1JGYPXB"
 };
 
 /* ================================================
