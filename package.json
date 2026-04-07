@@ -1,5 +1,7 @@
 {
-  "dependencies": {
-    "firebase": "^12.11.0"
+  "name": "my-website",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "echo 'No build step needed for static site'"
   }
 }
