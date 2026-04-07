@@ -1,0 +1,41 @@
+query ListAllUsers @auth(level: USER, insecureReason: "This operation is safe to expose to all logged in users.") {
+  users {
+    id
+    username
+    email
+    displayName
+    createdAt
+    lastLoginAt
+  }
+}
+
+mutation CreateNewNote($title: String!, $content: String!, $tags: [String]) @auth(level: USER) {
+  note_insert(data: {
+    title: $title,
+    content: $content,
+    tags: $tags,
+    createdAt_expr: "request.time",
+    updatedAt_expr: "request.time",
+    authorId_expr: "auth.uid"
+  })
+}
+
+query GetMyNotes @auth(level: USER) {
+  notes(where: {authorId: {eq_expr: "auth.uid"}}) {
+    id
+    title
+    content
+    createdAt
+    updatedAt
+    tags
+  }
+}
+
+mutation UpdateMyNote($id: UUID!, $title: String, $content: String, $tags: [String]) @auth(level: USER) {
+  note_update(key: {id: $id}, data: {
+    title: $title,
+    content: $content,
+    tags: $tags,
+    updatedAt_expr: "request.time"
+  })
+}

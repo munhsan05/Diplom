@@ -1,0 +1,34 @@
+type User @table {
+  username: String!
+  hashedPassword: String!
+  createdAt: Timestamp!
+  lastLoginAt: Timestamp!
+  email: String
+  displayName: String
+}
+
+type Note @table {
+  title: String!
+  content: String!
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
+  tags: [String]
+  author: User
+}
+
+type AuditLog @table {
+  eventType: String!
+  timestamp: Timestamp!
+  ipAddress: String!
+  details: String
+  user: User
+}
+
+type Session @table {
+  sessionToken: String!
+  createdAt: Timestamp!
+  expiresAt: Timestamp!
+  userAgent: String
+  ipAddress: String
+  user: User
+}

@@ -1,0 +1,89 @@
+mutation CreateDemoData @transaction @auth(level: USER, insecureReason: "Seed data mutation for development purposes.") {
+  user_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440000",
+      username: "demouser1",
+      hashedPassword: "password123",
+      createdAt: "2023-01-01T00:00:00Z",
+      lastLoginAt: "2023-01-01T00:00:00Z",
+      email: "demo1@example.com",
+      displayName: "Demo User One"
+    },
+    {
+      id: "550e8400-e29b-41d4-a716-446655440001",
+      username: "demouser2",
+      hashedPassword: "password456",
+      createdAt: "2023-01-02T00:00:00Z",
+      lastLoginAt: "2023-01-02T00:00:00Z",
+      email: "demo2@example.com",
+      displayName: "Demo User Two"
+    }
+  ])
+  note_insertMany(data: [
+    {
+      title: "First Note",
+      content: "This is the content of the first note by demo user one.",
+      createdAt: "2023-01-01T01:00:00Z",
+      updatedAt: "2023-01-01T01:00:00Z",
+      tags: ["important", "todo"],
+      author: {id: "550e8400-e29b-41d4-a716-446655440000"}
+    },
+    {
+      title: "Second Note",
+      content: "Another note from demo user one.",
+      createdAt: "2023-01-01T02:00:00Z",
+      updatedAt: "2023-01-01T02:00:00Z",
+      tags: ["ideas"],
+      author: {id: "550e8400-e29b-41d4-a716-446655440000"}
+    },
+    {
+      title: "Demo User Two's Note",
+      content: "This note belongs to demo user two.",
+      createdAt: "2023-01-02T01:00:00Z",
+      updatedAt: "2023-01-02T01:00:00Z",
+      tags: ["work", "project"],
+      author: {id: "550e8400-e29b-41d4-a716-446655440001"}
+    }
+  ])
+  session_insertMany(data: [
+    {
+      sessionToken: "token123",
+      createdAt: "2023-01-01T00:05:00Z",
+      expiresAt: "2023-01-08T00:05:00Z",
+      userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+      ipAddress: "192.168.1.1",
+      user: {id: "550e8400-e29b-41d4-a716-446655440000"}
+    },
+    {
+      sessionToken: "token456",
+      createdAt: "2023-01-02T00:10:00Z",
+      expiresAt: "2023-01-09T00:10:00Z",
+      userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)",
+      ipAddress: "192.168.1.2",
+      user: {id: "550e8400-e29b-41d4-a716-446655440001"}
+    }
+  ])
+  auditLog_insertMany(data: [
+    {
+      eventType: "USER_LOGIN",
+      timestamp: "2023-01-01T00:05:00Z",
+      ipAddress: "192.168.1.1",
+      details: "User demouser1 logged in.",
+      user: {id: "550e8400-e29b-41d4-a716-446655440000"}
+    },
+    {
+      eventType: "NOTE_CREATED",
+      timestamp: "2023-01-01T01:00:00Z",
+      ipAddress: "192.168.1.1",
+      details: "Note 'First Note' created.",
+      user: {id: "550e8400-e29b-41d4-a716-446655440000"}
+    },
+    {
+      eventType: "USER_LOGIN",
+      timestamp: "2023-01-02T00:10:00Z",
+      ipAddress: "192.168.1.2",
+      details: "User demouser2 logged in.",
+      user: {id: "550e8400-e29b-41d4-a716-446655440001"}
+    }
+  ])
+}

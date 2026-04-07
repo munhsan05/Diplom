@@ -1,0 +1,2018 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Фишинг тест</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --navy:        #060d1a;
+      --navy-2:      #0b1726;
+      --navy-3:      #0f2240;
+      --blue:        #1a6cf6;
+      --blue-2:      #3b82f6;
+      --blue-glow:   rgba(26,108,246,.35);
+      --cyan:        #06d6f5;
+      --cyan-dim:    rgba(6,214,245,.15);
+      --green:       #00e5a0;
+      --green-dim:   rgba(0,229,160,.15);
+      --red:         #ff3d5a;
+      --red-dim:     rgba(255,61,90,.15);
+      --yellow:      #fbbf24;
+      --white:       #ffffff;
+      --text-1:      #e8f0fe;
+      --text-2:      #8ea8c8;
+      --text-3:      #4a6380;
+      --surface-1:   rgba(255,255,255,.04);
+      --surface-2:   rgba(255,255,255,.08);
+      --surface-3:   rgba(255,255,255,.12);
+      --border:      rgba(255,255,255,.08);
+      --border-2:    rgba(255,255,255,.14);
+      --radius:      14px;
+      --radius-lg:   20px;
+      --radius-xl:   28px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Sora', sans-serif;
+      background: var(--navy);
+      color: var(--text-1);
+      min-height: 100vh;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    button { cursor: pointer; border: none; outline: none; font-family: inherit; }
+    a { text-decoration: none; }
+
+    /* ==============================
+       CANVAS BACKGROUND
+       ============================== */
+    #bg-canvas {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: .55;
+    }
+
+    /* ==============================
+       FLOATING THREAT ICONS
+       ============================== */
+    .threat-float {
+      position: fixed;
+      pointer-events: none;
+      z-index: 1;
+      font-size: 1.4rem;
+      opacity: 0;
+      filter: blur(0px);
+      animation: floatThreat 12s ease-in-out infinite;
+    }
+    @keyframes floatThreat {
+      0%   { opacity: 0; transform: translateY(0) rotate(0deg); }
+      10%  { opacity: .18; }
+      80%  { opacity: .12; }
+      100% { opacity: 0; transform: translateY(-120px) rotate(15deg); }
+    }
+
+    /* ==============================
+       NAVIGATION
+       ============================== */
+    nav {
+      position: sticky; top: 0; z-index: 200;
+      background: rgba(6,13,26,.88);
+      backdrop-filter: blur(20px) saturate(1.5);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    nav::after {
+      content: '';
+      position: absolute; bottom: 0; left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+      opacity: .4;
+    }
+    .logo {
+      display: flex; align-items: center; gap: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700; font-size: 1.05rem;
+      color: var(--white); letter-spacing: .02em;
+    }
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--blue) 0%, var(--cyan) 100%);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem;
+      box-shadow: 0 0 16px var(--blue-glow);
+      position: relative;
+      overflow: hidden;
+    }
+    .logo-icon::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,.25) 0%, transparent 60%);
+    }
+    .nav-right { display: flex; gap: .75rem; align-items: center; }
+    .nav-btn {
+      background: var(--surface-2);
+      color: var(--text-1);
+      border: 1px solid var(--border-2);
+      padding: .45rem 1.1rem;
+      border-radius: 8px;
+      font-size: .82rem; font-weight: 600;
+      transition: all .2s;
+      display: flex; align-items: center; gap: 6px;
+      backdrop-filter: blur(10px);
+    }
+    .nav-btn:hover { background: var(--surface-3); border-color: var(--cyan); color: var(--cyan); transform: translateY(-1px); }
+    .nav-btn-primary {
+      background: linear-gradient(135deg, var(--blue), #2563eb);
+      border-color: transparent;
+      color: var(--white);
+      box-shadow: 0 4px 16px var(--blue-glow);
+    }
+    .nav-btn-primary:hover { box-shadow: 0 6px 24px var(--blue-glow); color: var(--white); border-color: transparent; }
+
+    /* ==============================
+       SCREEN SYSTEM
+       ============================== */
+    main { min-height: calc(100vh - 64px); position: relative; z-index: 10; }
+    .screen { display: none; }
+    .screen.active { display: block; animation: screenIn .4s cubic-bezier(.22,.68,0,1.2) both; }
+    @keyframes screenIn {
+      from { opacity: 0; transform: translateY(20px) scale(.98); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* ==============================
+       LOGIN SCREEN
+       ============================== */
+    .hero {
+      min-height: calc(100vh - 64px);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      padding: 3rem 4rem;
+      position: relative;
+      overflow: hidden;
+      gap: 3rem;
+    }
+    @media(max-width:900px){
+      .hero { grid-template-columns:1fr; padding:2.5rem 1.5rem; }
+      .hero-right { display:none; }
+    }
+    .hero-glow {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+    }
+    .hero-glow-1 {
+      width: 700px; height: 500px;
+      background: radial-gradient(ellipse, rgba(26,108,246,.2) 0%, transparent 70%);
+      top: -10%; left: 20%;
+    }
+    .hero-glow-2 {
+      width: 500px; height: 400px;
+      background: radial-gradient(ellipse, rgba(6,214,245,.12) 0%, transparent 70%);
+      bottom: 0%; right: 0%;
+    }
+    .hero-glow-3 {
+      width: 300px; height: 300px;
+      background: radial-gradient(ellipse, rgba(0,229,160,.1) 0%, transparent 70%);
+      top: 60%; left: 5%;
+    }
+
+    /* Scan line animation */
+    .scan-line {
+      position: absolute; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent 0%, var(--cyan) 40%, var(--blue) 60%, transparent 100%);
+      opacity: .25;
+      animation: scanDown 8s linear infinite;
+      pointer-events: none;
+    }
+    @keyframes scanDown {
+      0%   { top: 0%; }
+      100% { top: 100%; }
+    }
+
+    /* Left side */
+    .hero-left {
+      display: flex; flex-direction: column;
+      align-items: flex-start;
+      position: relative; z-index: 2;
+    }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--cyan-dim);
+      border: 1px solid rgba(6,214,245,.3);
+      color: var(--cyan);
+      padding: .45rem 1.1rem; border-radius: 100px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .72rem; font-weight: 600;
+      letter-spacing: .1em; text-transform: uppercase;
+      margin-bottom: 1.5rem;
+      animation: badgePulse 3s ease-in-out infinite;
+    }
+    @keyframes badgePulse {
+      0%,100% { box-shadow: 0 0 0 0 rgba(6,214,245,.3); }
+      50%      { box-shadow: 0 0 0 8px rgba(6,214,245,0); }
+    }
+    .badge-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--cyan);
+      animation: dotBlink 1.5s ease-in-out infinite;
+    }
+    @keyframes dotBlink {
+      0%,100% { opacity: 1; } 50% { opacity: .3; }
+    }
+
+    .hero-title {
+      font-family: 'Sora', sans-serif;
+      font-size: clamp(2.8rem, 5vw, 4.2rem);
+      font-weight: 800;
+      color: var(--white);
+      letter-spacing: -.04em;
+      line-height: 1.05;
+      margin-bottom: 1rem;
+    }
+    .hero-title .accent {
+      background: linear-gradient(135deg, var(--cyan) 0%, var(--blue-2) 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      position: relative;
+    }
+    .hero-title .accent::after {
+      content: 'IQ';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, var(--cyan), var(--blue-2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: blur(14px);
+      opacity: .45;
+    }
+    .hero-sub {
+      color: var(--text-2); font-size: 1rem;
+      max-width: 400px;
+      margin: 0 0 2rem; line-height: 1.7;
+    }
+
+    /* Stats row */
+    .hero-stats {
+      display: flex; gap: 1.5rem; margin-bottom: 2.5rem; flex-wrap: wrap;
+    }
+    .hero-stat {
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .hero-stat-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.5rem; font-weight: 700;
+      color: var(--white);
+      line-height: 1;
+    }
+    .hero-stat-num span { color: var(--cyan); }
+    .hero-stat-label {
+      font-size: .72rem; color: var(--text-3);
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: .05em;
+    }
+    .hero-stat-divider {
+      width: 1px; background: var(--border);
+      align-self: stretch;
+    }
+
+    /* Threat ticker */
+    .threat-ticker {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(255,61,90,.06);
+      border: 1px solid rgba(255,61,90,.15);
+      border-radius: 8px;
+      padding: .6rem 1rem;
+      margin-bottom: 2rem;
+      overflow: hidden;
+      max-width: 420px;
+    }
+    .ticker-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .65rem; font-weight: 700;
+      color: var(--red); letter-spacing: .1em;
+      white-space: nowrap;
+      background: rgba(255,61,90,.12);
+      padding: .2rem .5rem; border-radius: 4px;
+      flex-shrink: 0;
+    }
+    .ticker-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .72rem; color: var(--text-2);
+      white-space: nowrap;
+      animation: tickerScroll 18s linear infinite;
+    }
+    @keyframes tickerScroll {
+      0%   { transform: translateX(100%); }
+      100% { transform: translateX(-100%); }
+    }
+
+    /* LOGIN CARD */
+    .login-card {
+      width: 100%; max-width: 420px;
+      background: rgba(11,23,38,.9);
+      backdrop-filter: blur(30px) saturate(1.5);
+      border: 1px solid var(--border-2);
+      border-radius: var(--radius-xl);
+      padding: 2rem;
+      box-shadow: 0 24px 64px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.05);
+      position: relative;
+      overflow: hidden;
+    }
+    .login-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(6,214,245,.5), rgba(26,108,246,.5), transparent);
+    }
+    .input-label {
+      display: flex; align-items: center; gap: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .7rem; font-weight: 600;
+      letter-spacing: .1em; text-transform: uppercase;
+      color: var(--text-2); margin-bottom: .6rem;
+    }
+    .username-input {
+      width: 100%; padding: .9rem 1.1rem;
+      background: var(--surface-1);
+      border: 1px solid var(--border-2);
+      border-radius: 10px;
+      font-size: .95rem; font-family: 'Sora', sans-serif;
+      color: var(--text-1);
+      transition: border-color .2s, box-shadow .2s, background .2s;
+    }
+    .username-input::placeholder { color: var(--text-3); }
+    .username-input:focus {
+      outline: none;
+      background: var(--surface-2);
+      border-color: var(--blue-2);
+      box-shadow: 0 0 0 3px rgba(59,130,246,.2), 0 0 20px rgba(26,108,246,.15);
+    }
+    .login-error {
+      color: var(--red); font-size: .82rem; font-weight: 500;
+      margin-top: .5rem; display: none;
+      animation: slideDown .25s ease;
+    }
+    @keyframes slideDown { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+    .btn-start {
+      width: 100%; margin-top: 1.25rem;
+      padding: 1rem;
+      background: linear-gradient(135deg, var(--blue) 0%, #2563eb 100%);
+      color: var(--white);
+      border-radius: 12px;
+      font-size: 1rem; font-weight: 700;
+      letter-spacing: .02em;
+      transition: transform .15s, box-shadow .2s;
+      box-shadow: 0 4px 20px var(--blue-glow);
+      position: relative; overflow: hidden;
+    }
+    .btn-start::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,.15) 0%, transparent 60%);
+    }
+    .btn-start:hover { transform: translateY(-2px); box-shadow: 0 8px 32px var(--blue-glow); }
+    .btn-start:active { transform: translateY(0); }
+    .login-meta {
+      display: flex; justify-content: center; gap: 1.25rem;
+      margin-top: 1.25rem; padding-top: 1.25rem;
+      border-top: 1px solid var(--border); flex-wrap: wrap;
+    }
+    .login-meta span {
+      font-size: .78rem; color: var(--text-3); font-weight: 500;
+      display: flex; align-items: center; gap: 5px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* RIGHT SIDE — live threat visualizer */
+    .hero-right {
+      position: relative; z-index: 2;
+      display: flex; flex-direction: column; gap: 1rem;
+      align-items: stretch;
+    }
+    .hero-right-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .68rem; color: var(--text-3);
+      letter-spacing: .12em; text-transform: uppercase;
+      margin-bottom: .25rem;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .hero-right-title::before {
+      content: '';
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--cyan);
+      animation: dotBlink 1.5s ease-in-out infinite;
+    }
+
+    .live-email-feed {
+      display: flex; flex-direction: column; gap: .6rem;
+    }
+    .feed-item {
+      background: rgba(11,23,38,.7);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: .85rem 1rem;
+      display: flex; align-items: center; gap: 12px;
+      backdrop-filter: blur(10px);
+      transition: transform .2s, border-color .2s;
+      cursor: default;
+      animation: feedSlideIn .5s cubic-bezier(.22,.68,0,1.2) both;
+    }
+    .feed-item:hover { transform: translateX(4px); }
+    .feed-item.phish { border-left: 3px solid var(--red); }
+    .feed-item.legit { border-left: 3px solid var(--green); }
+    @keyframes feedSlideIn {
+      from { opacity:0; transform:translateX(20px); }
+      to   { opacity:1; transform:translateX(0); }
+    }
+    .feed-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .75rem; font-weight: 700; color: #fff;
+      flex-shrink: 0;
+    }
+    .feed-content { flex: 1; min-width: 0; }
+    .feed-from { font-size: .8rem; font-weight: 600; color: var(--text-1); }
+    .feed-subject { font-size: .72rem; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+    .feed-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .6rem; font-weight: 700; letter-spacing: .06em;
+      padding: .2rem .55rem; border-radius: 100px;
+      flex-shrink: 0;
+    }
+    .feed-tag.phish { background: var(--red-dim); color: var(--red); border: 1px solid rgba(255,61,90,.25); }
+    .feed-tag.legit { background: var(--green-dim); color: var(--green); border: 1px solid rgba(0,229,160,.25); }
+
+    /* Attack counter widget */
+    .attack-counter {
+      background: rgba(11,23,38,.7);
+      border: 1px solid var(--border-2);
+      border-radius: 12px;
+      padding: 1rem 1.1rem;
+      display: flex; align-items: center; gap: 1rem;
+      backdrop-filter: blur(10px);
+    }
+    .attack-counter-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.8rem; font-weight: 700;
+      color: var(--red);
+      min-width: 90px;
+      line-height: 1;
+    }
+    .attack-counter-info { flex: 1; }
+    .attack-counter-label { font-size: .75rem; color: var(--text-2); font-weight: 600; margin-bottom: 4px; }
+    .attack-counter-sub { font-size: .68rem; color: var(--text-3); font-family: 'JetBrains Mono', monospace; }
+    .attack-bar {
+      height: 3px; background: var(--surface-2); border-radius: 100px; overflow: hidden; margin-top: 8px;
+    }
+    .attack-bar-fill {
+      height: 100%; background: linear-gradient(90deg, var(--red), #ff6b6b);
+      border-radius: 100px;
+      animation: barGrow 2s ease-out both;
+      width: 73%;
+    }
+    @keyframes barGrow { from { width:0; } }
+
+    /* Animated email cards in hero background (kept for fallback) */
+    .hero-emails {
+      position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: -1;
+    }
+    .hero-email-card {
+      position: absolute;
+      background: rgba(11,23,38,.7);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .75rem 1rem;
+      width: 220px;
+      opacity: 0;
+      font-size: .7rem;
+      color: var(--text-2);
+      backdrop-filter: blur(10px);
+    }
+    .hero-email-card.phish { border-color: rgba(255,61,90,.2); }
+    .hero-email-card.legit { border-color: rgba(0,229,160,.2); }
+    .hero-email-card .e-from { font-weight: 600; color: var(--text-1); font-size: .72rem; margin-bottom: 2px; }
+    .hero-email-card .e-sub { font-family: 'JetBrains Mono', monospace; font-size: .65rem; opacity: .7; }
+
+    /* Phishing types mini legend */
+    .phish-types {
+      display: grid; grid-template-columns: 1fr 1fr; gap: .5rem;
+    }
+    .phish-type-card {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: .6rem .75rem;
+      display: flex; align-items: center; gap: 8px;
+      transition: border-color .2s, background .2s;
+    }
+    .phish-type-card:hover { background: var(--surface-2); border-color: var(--border-2); }
+    .phish-type-icon { font-size: 1rem; flex-shrink: 0; }
+    .phish-type-name { font-size: .72rem; font-weight: 600; color: var(--text-1); }
+    .phish-type-desc { font-size: .62rem; color: var(--text-3); margin-top: 1px; }
+
+    /* ==============================
+       QUIZ SCREEN
+       ============================== */
+    .quiz-topbar {
+      background: rgba(6,13,26,.9);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: .75rem 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem;
+      position: sticky; top: 64px; z-index: 100;
+    }
+    .player-tag {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--surface-1); border: 1px solid var(--border);
+      padding: .4rem .9rem; border-radius: 100px;
+      font-size: .82rem; font-weight: 600; color: var(--text-1);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Timer */
+    .timer-wrap { display: flex; align-items: center; justify-content: center; }
+    .timer-ring { position: relative; width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; }
+    .timer-ring svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+    .timer-bg { fill: none; stroke: var(--surface-2); stroke-width: 3.5; }
+    .timer-fg { fill: none; stroke: var(--blue-2); stroke-width: 3.5; stroke-linecap: round; transition: stroke-dashoffset .8s linear, stroke .4s; }
+    .timer-text { font-family: 'JetBrains Mono', monospace; font-size: .9rem; font-weight: 700; color: var(--text-1); position: relative; z-index:1; }
+    .timer-ring.urgent .timer-fg { stroke: var(--red); filter: drop-shadow(0 0 4px var(--red)); }
+    .timer-ring.urgent .timer-text { color: var(--red); }
+    .timer-ring.urgent { animation: shake .5s ease-in-out infinite; }
+    @keyframes shake { 0%,100% {transform:rotate(0)} 25% {transform:rotate(-3deg)} 75% {transform:rotate(3deg)} }
+
+    .score-pill {
+      display: flex; align-items: center; gap: 6px;
+      background: var(--surface-1); border: 1px solid var(--border-2);
+      padding: .4rem .9rem; border-radius: 100px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .82rem; font-weight: 700; color: var(--text-1);
+    }
+    .score-pill .s-num { color: var(--cyan); }
+
+    /* Progress */
+    .progress-wrap {
+      background: rgba(6,13,26,.7);
+      border-bottom: 1px solid var(--border);
+      padding: .65rem 2rem;
+      display: flex; align-items: center; gap: 1rem;
+    }
+    .progress-steps { display: flex; gap: 5px; flex: 1; }
+    .step-dot {
+      flex: 1; height: 5px; border-radius: 100px;
+      background: var(--surface-2);
+      transition: all .35s cubic-bezier(.22,.68,0,1.2);
+    }
+    .step-dot.active  { background: var(--blue-2); transform: scaleY(1.6); box-shadow: 0 0 6px var(--blue-glow); }
+    .step-dot.correct { background: var(--green); box-shadow: 0 0 4px rgba(0,229,160,.4); }
+    .step-dot.wrong   { background: var(--red); box-shadow: 0 0 4px rgba(255,61,90,.4); }
+    .step-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .7rem; color: var(--text-3); white-space: nowrap;
+    }
+
+    /* Quiz layout */
+    .quiz-layout {
+      max-width: 760px; margin: 2rem auto;
+      padding: 0 1.5rem 5rem;
+    }
+
+    /* Email Client Mock - Gmail white style */
+    .email-client {
+      background: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,.18);
+      transition: transform .3s;
+    }
+
+    /* OS Window chrome - light gray like browser */
+    .window-chrome {
+      background: #f1f3f4;
+      border-bottom: 1px solid #dadce0;
+      padding: .6rem 1rem;
+      display: flex; align-items: center; gap: .75rem;
+    }
+    .wc-dots { display: flex; gap: 6px; }
+    .wc-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .wc-dot.r { background: #ff5f57; } .wc-dot.y { background: #febc2e; } .wc-dot.g { background: #28c840; }
+    .wc-url {
+      flex: 1; background: #ffffff; border: 1px solid #dadce0;
+      border-radius: 20px; padding: .25rem .85rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .7rem; color: #444;
+      display: flex; align-items: center; gap: 6px;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,.06);
+    }
+    .wc-url .lock { color: #188038; font-size: .7rem; }
+    .wc-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .68rem; color: #666;
+      padding: .2rem .6rem;
+      background: #e8eaed;
+      border-radius: 4px;
+    }
+
+    /* Email sidebar - Gmail style */
+    .email-layout { display: flex; }
+    .email-sidebar {
+      width: 200px; min-width: 200px;
+      background: #ffffff;
+      border-right: 1px solid #e0e0e0;
+      padding: .75rem 0;
+    }
+    .sidebar-header {
+      padding: .5rem 1.1rem .4rem;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .sidebar-header-logo {
+      display: flex; align-items: center; gap: 6px;
+    }
+    .gmail-m {
+      width: 28px; height: 28px; flex-shrink: 0;
+    }
+    .sidebar-compose {
+      margin: .4rem .75rem .9rem;
+      background: #c2e7ff; color: #001d35;
+      border-radius: 18px; padding: .55rem 1.1rem .55rem .9rem;
+      font-size: .82rem; font-weight: 600;
+      display: flex; align-items: center; gap: 6px;
+      cursor: default; box-shadow: 0 1px 3px rgba(0,0,0,.1);
+    }
+    .sidebar-item {
+      padding: .38rem 1rem .38rem 1.1rem;
+      display: flex; align-items: center; gap: 10px;
+      font-size: .82rem; color: #444; cursor: pointer;
+      transition: background .15s;
+      border-radius: 0 50px 50px 0;
+      margin-right: .75rem;
+    }
+    .sidebar-item.active {
+      background: #d3e3fd; color: #041e49; font-weight: 700;
+    }
+    .sidebar-item:not(.active):hover { background: #f1f3f4; }
+    .sidebar-item .si-badge {
+      margin-left: auto;
+      color: #444; font-size: .75rem; font-weight: 700;
+    }
+    .sidebar-item.active .si-badge { color: #041e49; }
+
+    /* Main email content - white */
+    .email-main { flex: 1; min-width: 0; background: #ffffff; }
+    .email-header-bar {
+      padding: 1rem 1.5rem .75rem;
+      border-bottom: 1px solid #f1f3f4;
+    }
+    .email-from-row {
+      display: flex; align-items: center; gap: 10px; margin-bottom: .75rem;
+    }
+    .email-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: .82rem; color: #fff;
+      flex-shrink: 0; letter-spacing: .02em;
+      position: relative;
+    }
+    .email-avatar .avatar-ring { display: none; }
+    .email-sender-info { flex: 1; min-width: 0; }
+    .sender-name { font-size: .88rem; font-weight: 600; color: #202124; line-height: 1.3; }
+    .sender-addr {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .7rem; color: #5f6368; margin-top: 1px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .sender-addr .addr-highlight { background: rgba(255,61,90,.18); color: #c5221f; border-radius: 3px; padding: 0 2px; }
+    .email-timestamp { font-size: .72rem; color: #5f6368; white-space: nowrap; }
+    .email-subject-line {
+      font-size: 1.1rem; font-weight: 600; color: #202124;
+      padding-bottom: .75rem; border-bottom: 1px solid #f1f3f4;
+      line-height: 1.4;
+    }
+    .email-body-area { padding: 1.1rem 1.5rem 1rem; }
+    .email-body-text { font-size: .875rem; line-height: 1.85; color: #3c4043; }
+    .email-body-text strong { color: #202124; font-weight: 600; }
+    .email-cta {
+      display: inline-block; margin-top: 1rem;
+      padding: .6rem 1.4rem; border-radius: 8px;
+      font-size: .85rem; font-weight: 700; cursor: default;
+      transition: all .2s; position: relative; overflow: hidden;
+    }
+    .email-cta::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,.15) 0%, transparent 60%);
+    }
+
+    /* Phishing indicators */
+    .phish-indicator {
+      margin: .75rem 1.5rem;
+      background: #fce8e6;
+      border: 1px solid #f5c6c2;
+      border-radius: 8px;
+      padding: .6rem .9rem;
+      display: flex; align-items: center; gap: 8px;
+      font-size: .75rem; color: #c5221f;
+      font-family: 'JetBrains Mono', monospace;
+      animation: fadeIn .4s ease;
+    }
+    @keyframes fadeIn { from {opacity:0} to {opacity:1} }
+
+    /* Feedback */
+    .feedback-panel {
+      margin: 0 1.5rem 1rem;
+      border-radius: 12px;
+      padding: 1rem 1.1rem;
+      display: none;
+      animation: feedbackPop .4s cubic-bezier(.22,.68,0,1.2) both;
+      border: 1px solid transparent;
+    }
+    @keyframes feedbackPop {
+      0%   { opacity:0; transform:scale(.95) translateY(8px); }
+      60%  { transform:scale(1.01); }
+      100% { opacity:1; transform:scale(1) translateY(0); }
+    }
+    .feedback-panel.correct {
+      background: #e6f4ea;
+      border-color: #a8d5b5;
+    }
+    .feedback-panel.wrong {
+      background: #fce8e6;
+      border-color: #f5c6c2;
+    }
+    .feedback-panel.timeout {
+      background: #fef7e0;
+      border-color: #fce29a;
+    }
+    .fb-title {
+      font-size: .88rem; font-weight: 700; color: #202124;
+      display: flex; align-items: center; gap: 8px; margin-bottom: .5rem;
+    }
+    .fb-desc { font-size: .8rem; color: #3c4043; line-height: 1.65; }
+
+    /* Action row */
+    .action-row {
+      padding: 1rem 1.5rem 1.5rem;
+      display: flex; gap: .75rem;
+      transition: opacity .25s;
+      border-top: 1px solid #f1f3f4;
+    }
+    .btn-action {
+      flex: 1; padding: .9rem;
+      border-radius: 12px; font-size: .9rem; font-weight: 700;
+      transition: all .2s; position: relative; overflow: hidden;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-action::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,.12) 0%, transparent 60%);
+    }
+    .btn-phish {
+      background: #fce8e6;
+      border: 1.5px solid #f5c6c2;
+      color: #c5221f;
+    }
+    .btn-phish:hover { background: #f5c6c2; border-color: #c5221f; color: #a50e0e; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(197,34,31,.2); }
+    .btn-legit {
+      background: #e6f4ea;
+      border: 1.5px solid #a8d5b5;
+      color: #137333;
+    }
+    .btn-legit:hover { background: #ceead6; border-color: #137333; color: #0d652d; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(19,115,51,.2); }
+
+    .btn-next {
+      display: none;
+      margin: 0 1.5rem .875rem;
+      padding: .875rem 1.5rem;
+      background: #1a73e8;
+      color: #fff; border-radius: 8px;
+      font-size: .9rem; font-weight: 600;
+      transition: all .2s; width: calc(100% - 3rem);
+      box-shadow: 0 1px 3px rgba(0,0,0,.2);
+      position: relative; overflow: hidden;
+    }
+    .btn-next::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,.15) 0%, transparent 60%);
+    }
+    .btn-next:hover { transform: translateY(-2px); box-shadow: 0 8px 24px var(--blue-glow); }
+
+    /* Difficulty badge */
+    .diff-tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: .15rem .55rem; border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em;
+    }
+    .diff-easy { background: rgba(0,229,160,.15); color: var(--green); }
+    .diff-medium { background: rgba(251,191,36,.15); color: var(--yellow); }
+    .diff-hard { background: rgba(255,61,90,.15); color: var(--red); }
+
+    /* ==============================
+       RESULTS SCREEN
+       ============================== */
+    .results-screen-inner {
+      max-width: 700px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem;
+    }
+    .results-hero {
+      text-align: center; margin-bottom: 2rem;
+    }
+    .score-orbit {
+      position: relative; width: 160px; height: 160px;
+      margin: 0 auto 1.5rem;
+    }
+    .score-orbit svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+    .orbit-bg { fill: none; stroke: var(--surface-2); stroke-width: 8; }
+    .orbit-fg { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1.2s cubic-bezier(.22,.68,0,1.2); }
+    .score-inner {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+    .score-big { font-size: 2.5rem; font-weight: 800; color: var(--white); font-family: 'JetBrains Mono', monospace; line-height: 1; }
+    .score-of { font-size: .75rem; color: var(--text-3); font-family: 'JetBrains Mono', monospace; }
+    .res-title { font-size: 1.5rem; font-weight: 800; color: var(--white); margin-bottom: .4rem; }
+    .res-sub { font-size: .9rem; color: var(--text-2); max-width: 360px; margin: 0 auto .75rem; }
+    .res-meta { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; }
+    .res-meta span { font-family: 'JetBrains Mono', monospace; font-size: .75rem; color: var(--text-3); }
+
+    .stat-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: .75rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-card {
+      background: var(--surface-1); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.1rem;
+      text-align: center;
+      transition: transform .2s, border-color .2s;
+    }
+    .stat-card:hover { transform: translateY(-2px); border-color: var(--border-2); }
+    .stat-num { font-size: 1.8rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; line-height: 1.1; }
+    .stat-label { font-size: .75rem; color: var(--text-3); margin-top: .25rem; }
+
+    .detail-panel {
+      background: var(--surface-1); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+    .detail-head {
+      padding: .875rem 1.25rem;
+      background: rgba(255,255,255,.03);
+      border-bottom: 1px solid var(--border);
+      font-size: .8rem; font-weight: 700; color: var(--text-2);
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: .05em; text-transform: uppercase;
+    }
+    .answer-row {
+      display: grid; grid-template-columns: 32px 28px 1fr auto 56px;
+      align-items: center; gap: .5rem;
+      padding: .7rem 1.25rem;
+      border-bottom: 1px solid rgba(255,255,255,.04);
+      font-size: .82rem;
+      animation: rowSlide .4s ease both;
+      transition: background .15s;
+    }
+    .answer-row:hover { background: var(--surface-1); }
+    .answer-row:last-child { border-bottom: none; }
+    @keyframes rowSlide { from{opacity:0;transform:translateX(-10px)} to{opacity:1;transform:translateX(0)} }
+    .a-num { font-family: 'JetBrains Mono', monospace; font-size: .7rem; color: var(--text-3); }
+    .a-subject { color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .a-badge {
+      font-family: 'JetBrains Mono', monospace; font-size: .68rem; font-weight: 700;
+      padding: .15rem .55rem; border-radius: 4px; white-space: nowrap;
+    }
+    .a-badge.phish { background: var(--red-dim); color: var(--red); }
+    .a-badge.legit { background: var(--green-dim); color: var(--green); }
+    .a-time { font-family: 'JetBrains Mono', monospace; font-size: .72rem; color: var(--text-3); text-align: right; }
+
+    /* ==============================
+       ANALYTICS DASHBOARD
+       ============================== */
+    .dash-screen-inner { max-width: 860px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
+    .dash-header { text-align: center; margin-bottom: 2rem; }
+    .dash-title { font-size: 1.6rem; font-weight: 800; color: var(--white); margin-bottom: .35rem; }
+    .dash-sub { font-size: .85rem; color: var(--text-3); font-family: 'JetBrains Mono', monospace; }
+    .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    @media(max-width:640px){ .dash-grid { grid-template-columns: 1fr; } }
+    .dash-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem 1.4rem; transition: border-color .2s; }
+    .dash-card:hover { border-color: var(--border-2); }
+    .dash-card-title { font-family: 'JetBrains Mono', monospace; font-size: .7rem; font-weight: 700; color: var(--text-3); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 1rem; }
+    .dash-card-full { grid-column: 1 / -1; }
+    .bar-chart { display: flex; flex-direction: column; gap: .7rem; }
+    .bar-row { display: flex; align-items: center; gap: .75rem; }
+    .bar-label { font-size: .75rem; color: var(--text-2); min-width: 90px; font-family: 'JetBrains Mono', monospace; }
+    .bar-track { flex: 1; height: 10px; background: var(--surface-2); border-radius: 100px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 100px; transition: width 1s cubic-bezier(.22,.68,0,1.2); width: 0; }
+    .bar-val { font-size: .75rem; color: var(--text-2); min-width: 36px; text-align: right; font-family: 'JetBrains Mono', monospace; }
+    .donut-wrap { display: flex; align-items: center; gap: 1.5rem; }
+    .donut-legend { display: flex; flex-direction: column; gap: .5rem; }
+    .donut-legend-item { display: flex; align-items: center; gap: .5rem; font-size: .78rem; color: var(--text-2); }
+    .donut-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .time-chart { display: flex; align-items: flex-end; gap: 6px; height: 80px; }
+    .time-bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .time-bar { width: 100%; border-radius: 4px 4px 0 0; transition: height 1s cubic-bezier(.22,.68,0,1.2); background: var(--blue-2); min-height: 4px; }
+    .time-bar.wrong-bar { background: var(--red); }
+    .time-bar-label { font-size: .6rem; color: var(--text-3); font-family: 'JetBrains Mono', monospace; }
+    .kpi-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .kpi-card { flex: 1; min-width: 140px; background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; text-align: center; }
+    .kpi-num { font-family: 'JetBrains Mono', monospace; font-size: 1.6rem; font-weight: 800; color: var(--white); line-height: 1; }
+    .kpi-label { font-size: .7rem; color: var(--text-3); margin-top: .35rem; }
+    .btn-csv { display: inline-flex; align-items: center; gap: 8px; background: var(--green-dim); border: 1px solid rgba(0,229,160,.3); color: var(--green); padding: .65rem 1.4rem; border-radius: 10px; font-size: .85rem; font-weight: 700; transition: all .2s; font-family: 'Sora', sans-serif; cursor: pointer; }
+    .btn-csv:hover { background: rgba(0,229,160,.25); transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,229,160,.2); }
+    .dash-actions { display: flex; gap: .75rem; justify-content: center; flex-wrap: wrap; margin-top: 1.5rem; }
+    .btn-dash-back { display: inline-flex; align-items: center; gap: 8px; background: var(--surface-2); border: 1px solid var(--border-2); color: var(--text-1); padding: .65rem 1.4rem; border-radius: 10px; font-size: .85rem; font-weight: 700; transition: all .2s; font-family: 'Sora', sans-serif; cursor: pointer; }
+    .btn-dash-back:hover { background: var(--surface-3); transform: translateY(-2px); }
+    .analysis-panel { background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 1rem; }
+    .analysis-item { padding: .9rem 1.25rem; border-bottom: 1px solid rgba(255,255,255,.04); display: grid; grid-template-columns: 28px 28px 1fr; gap: .6rem; align-items: start; font-size: .82rem; }
+    .analysis-item:last-child { border-bottom: none; }
+    .analysis-wrong { background: rgba(255,61,90,.04); }
+    .analysis-correct { background: rgba(0,229,160,.03); }
+    .analysis-detail { color: var(--text-3); font-size: .75rem; margin-top: .25rem; line-height: 1.5; }
+    .analysis-tag { font-family: 'JetBrains Mono', monospace; font-size: .65rem; font-weight: 700; padding: .15rem .45rem; border-radius: 4px; margin-top: .2rem; display: inline-block; }
+    .analysis-tag.slow { background: rgba(251,191,36,.15); color: var(--yellow); }
+    .analysis-tag.fast { background: rgba(0,229,160,.15); color: var(--green); }
+    .analysis-tag.missed { background: rgba(255,61,90,.15); color: var(--red); }
+    .analysis-tag.caught { background: rgba(26,108,246,.15); color: var(--blue-2); }
+
+    .result-btns { display: flex; gap: .75rem; }
+    .btn-restart {
+      flex: 1; padding: .9rem;
+      background: var(--surface-2); border: 1px solid var(--border-2);
+      color: var(--text-1); border-radius: 12px;
+      font-size: .9rem; font-weight: 700;
+      transition: all .2s;
+    }
+    .btn-restart:hover { background: var(--surface-3); transform: translateY(-2px); }
+    .btn-leaderboard {
+      flex: 1; padding: .9rem;
+      background: linear-gradient(135deg, var(--blue), #2563eb);
+      color: var(--white); border-radius: 12px;
+      font-size: .9rem; font-weight: 700;
+      transition: all .2s; border: none;
+      box-shadow: 0 4px 16px var(--blue-glow);
+    }
+    .btn-leaderboard:hover { transform: translateY(-2px); box-shadow: 0 8px 24px var(--blue-glow); }
+
+    /* ==============================
+       LEADERBOARD SCREEN
+       ============================== */
+    .lb-screen { max-width: 700px; margin: 0 auto; padding: 2.5rem 1.5rem 5rem; }
+    .lb-header { text-align: center; margin-bottom: 2rem; }
+    .lb-title { font-size: 2rem; font-weight: 800; color: var(--white); margin-bottom: .4rem; }
+    .lb-sub { font-size: .9rem; color: var(--text-2); }
+    .lb-panel {
+      background: var(--surface-1); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 1.25rem;
+    }
+    .lb-top3 { display: flex; justify-content: center; gap: 1rem; padding: 1.75rem 1.25rem 1.25rem; }
+    .lb-podium {
+      display: flex; flex-direction: column; align-items: center; gap: .5rem;
+      flex: 1; max-width: 130px;
+    }
+    .lb-podium.gold .p-crown { color: #fbbf24; }
+    .lb-podium.silver .p-crown { color: #94a3b8; }
+    .lb-podium.bronze .p-crown { color: #cd7f32; }
+    .p-crown { font-size: 1.5rem; }
+    .p-avatar {
+      width: 52px; height: 52px; border-radius: 50%;
+      background: var(--surface-2); border: 2px solid var(--border-2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.3rem; font-weight: 800; color: var(--text-1);
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .lb-podium.gold .p-avatar { border-color: #fbbf24; box-shadow: 0 0 16px rgba(251,191,36,.3); }
+    .p-name { font-size: .8rem; font-weight: 700; color: var(--text-1); text-align: center; }
+    .p-score { font-family: 'JetBrains Mono', monospace; font-size: .88rem; font-weight: 700; }
+    .lb-podium.gold .p-score { color: #fbbf24; }
+    .lb-podium.silver .p-score { color: #94a3b8; }
+    .lb-podium.bronze .p-score { color: #cd7f32; }
+
+    .lb-divider { height: 1px; background: var(--border); }
+    .lb-row {
+      display: grid; grid-template-columns: 48px 1fr 60px 60px 80px;
+      align-items: center; gap: .5rem;
+      padding: .75rem 1.25rem;
+      border-bottom: 1px solid rgba(255,255,255,.04);
+      font-size: .85rem;
+      animation: rowSlide .35s ease both;
+      transition: background .15s;
+    }
+    .lb-row:hover { background: var(--surface-1); }
+    .lb-row:last-child { border-bottom: none; }
+    .lb-row.me { background: rgba(26,108,246,.1); border-color: rgba(26,108,246,.2); }
+    .lb-rank { font-family: 'JetBrains Mono', monospace; font-size: .8rem; color: var(--text-3); text-align: center; }
+    .lb-name { font-weight: 600; color: var(--text-1); }
+    .lb-score { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--cyan); text-align: center; }
+    .lb-time { font-family: 'JetBrains Mono', monospace; font-size: .75rem; color: var(--text-3); text-align: center; }
+    .lb-date { font-size: .72rem; color: var(--text-3); text-align: right; }
+    .lb-empty { padding: 3rem; text-align: center; color: var(--text-3); font-size: .9rem; }
+    .lb-actions { display: flex; gap: .75rem; }
+    .btn-back {
+      padding: .875rem 1.5rem;
+      background: var(--surface-2); border: 1px solid var(--border-2);
+      color: var(--text-1); border-radius: 12px;
+      font-size: .9rem; font-weight: 700; flex: 1;
+      transition: all .2s;
+    }
+    .btn-back:hover { background: var(--surface-3); transform: translateY(-2px); }
+    .btn-clear {
+      padding: .875rem 1.5rem;
+      background: var(--red-dim); border: 1px solid rgba(255,61,90,.25);
+      color: var(--red); border-radius: 12px;
+      font-size: .9rem; font-weight: 700;
+      transition: all .2s;
+    }
+    .btn-clear:hover { background: var(--red); color: var(--white); transform: translateY(-2px); }
+
+    /* Age step styles */
+    .step-back-btn {
+      color: var(--text-3); font-size: .8rem; cursor: pointer;
+      margin-bottom: 1rem; display: inline-flex; align-items: center; gap: 4px;
+      transition: color .2s;
+    }
+    .step-back-btn:hover { color: var(--cyan); }
+    .age-greeting {
+      font-size: .9rem; color: var(--cyan); font-weight: 600;
+      margin-bottom: 1rem; text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .age-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .6rem; margin-bottom: .5rem; }
+    .age-btn {
+      background: var(--surface-1); border: 1.5px solid var(--border-2);
+      border-radius: 12px; padding: .9rem .5rem;
+      display: flex; flex-direction: column; align-items: center; gap: .35rem;
+      cursor: pointer; transition: all .2s; color: var(--text-1);
+    }
+    .age-btn:hover { background: var(--surface-2); border-color: var(--blue-2); transform: translateY(-2px); }
+    .age-btn.selected { background: rgba(26,108,246,.15); border-color: var(--blue); box-shadow: 0 0 16px var(--blue-glow); }
+    .age-icon { font-size: 1.5rem; }
+    .age-range { font-family: 'JetBrains Mono', monospace; font-size: .85rem; font-weight: 700; color: var(--white); }
+    .age-label { font-size: .68rem; color: var(--text-3); }
+
+    /* Age badge in quiz topbar */
+    .age-badge-tag {
+      font-size: .7rem; font-family: 'JetBrains Mono', monospace;
+      background: rgba(6,214,245,.12); border: 1px solid rgba(6,214,245,.25);
+      color: var(--cyan); padding: .15rem .5rem; border-radius: 4px;
+    }
+
+    /* ==============================
+       LEADERBOARD ANIMATIONS
+       ============================== */
+    @keyframes podiumRise {
+      from { opacity: 0; transform: translateY(40px) scale(.9); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes crownBounce {
+      0%,100% { transform: translateY(0) rotate(-5deg); }
+      50%      { transform: translateY(-8px) rotate(5deg); }
+    }
+    @keyframes scoreCountUp {
+      from { transform: scale(.7); opacity: 0; }
+      to   { transform: scale(1); opacity: 1; }
+    }
+    @keyframes confettiFall {
+      0%   { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+    @keyframes shimmer {
+      0%   { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    .lb-podium.gold {
+      animation: podiumRise .6s cubic-bezier(.22,.68,0,1.2) .1s both;
+    }
+    .lb-podium.silver {
+      animation: podiumRise .6s cubic-bezier(.22,.68,0,1.2) .25s both;
+    }
+    .lb-podium.bronze {
+      animation: podiumRise .6s cubic-bezier(.22,.68,0,1.2) .4s both;
+    }
+    .lb-podium.gold .p-crown {
+      animation: crownBounce 2s ease-in-out infinite;
+      display: inline-block;
+    }
+    .lb-podium.gold .p-score {
+      background: linear-gradient(90deg, #fbbf24, #fffbe6, #fbbf24);
+      background-size: 200% auto;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: shimmer 2.5s linear infinite;
+    }
+    .lb-confetti {
+      position: fixed; pointer-events: none; z-index: 9999;
+      width: 8px; height: 8px; border-radius: 2px;
+      animation: confettiFall linear forwards;
+    }
+    .p-avatar { position: relative; overflow: visible !important; }
+    .lb-podium.gold .p-avatar::after {
+      content: '✨';
+      position: absolute; top: -8px; right: -8px;
+      font-size: .7rem;
+      animation: crownBounce 1.5s ease-in-out infinite .3s;
+    }
+    .lb-row {
+      animation: rowSlide .35s ease both;
+    }
+    .lb-row .lb-score {
+      transition: transform .3s;
+    }
+    .lb-row:hover .lb-score {
+      transform: scale(1.2);
+    }
+    /* Score pop animation for top scores */
+    @keyframes scorePop {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.3); color: var(--yellow); }
+      100% { transform: scale(1); }
+    }
+    .lb-podium.gold .p-score-num { animation: scorePop 1s ease .8s both; }
+    @media (max-width: 560px) {
+      nav { padding: 0 1rem; }
+      .quiz-topbar { padding: .75rem 1rem; }
+      .progress-wrap { padding: .65rem 1rem; }
+      .quiz-layout { padding: 0 .75rem 5rem; margin-top: 1.25rem; }
+      .email-sidebar { display: none; }
+      .action-row { padding: .75rem 1rem 1.25rem; }
+      .btn-next { width: calc(100% - 2rem); margin: 0 1rem .75rem; }
+      .feedback-panel { margin: 0 1rem .75rem; }
+      .stat-grid { grid-template-columns: 1fr 1fr; }
+      .lb-row { grid-template-columns: 40px 1fr 52px 52px; }
+      .lb-date { display: none; }
+      .lb-top3 { gap: .5rem; }
+      .guide-modal { width: 95vw; max-height: 90vh; }
+      .guide-grid { grid-template-columns: 1fr; }
+      .guide-protect-grid { grid-template-columns: 1fr; }
+      .guide-emergency-grid { grid-template-columns: 1fr 1fr; }
+      .guide-tabs { flex-wrap: wrap; gap: .4rem; }
+      .guide-tab { font-size: .72rem; padding: .4rem .7rem; }
+    }
+
+    /* ==============================
+       GUIDE MODAL
+       ============================== */
+    .guide-modal-overlay {
+      position: fixed; inset: 0; z-index: 1000;
+      background: rgba(6,13,26,.85);
+      backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center;
+      padding: 1rem;
+      opacity: 0; pointer-events: none;
+      transition: opacity .25s ease;
+    }
+    .guide-modal-overlay.open {
+      opacity: 1; pointer-events: all;
+    }
+    .guide-modal {
+      background: var(--navy-2);
+      border: 1px solid var(--border-2);
+      border-radius: var(--radius-xl);
+      width: min(860px, 96vw);
+      max-height: 88vh;
+      display: flex; flex-direction: column;
+      box-shadow: 0 32px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(6,214,245,.08);
+      overflow: hidden;
+      transform: scale(.96) translateY(12px);
+      transition: transform .28s cubic-bezier(.22,.68,0,1.2);
+    }
+    .guide-modal-overlay.open .guide-modal {
+      transform: scale(1) translateY(0);
+    }
+    .guide-modal-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.4rem 1.75rem 1.1rem;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      background: linear-gradient(135deg, rgba(26,108,246,.08) 0%, transparent 60%);
+    }
+    .guide-modal-title {
+      font-size: 1.15rem; font-weight: 700; color: var(--white);
+      letter-spacing: -.02em;
+    }
+    .guide-close-btn {
+      background: var(--surface-2);
+      border: 1px solid var(--border-2);
+      color: var(--text-2);
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      font-size: .9rem;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all .18s;
+    }
+    .guide-close-btn:hover { background: var(--red-dim); color: var(--red); border-color: var(--red); }
+
+    .guide-modal-body {
+      overflow-y: auto; padding: 1.5rem 1.75rem;
+      flex: 1;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border-2) transparent;
+    }
+
+    .guide-intro {
+      background: var(--cyan-dim);
+      border: 1px solid rgba(6,214,245,.2);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.4rem;
+      font-size: .9rem; color: var(--text-1); line-height: 1.6;
+    }
+
+    /* Tabs */
+    .guide-tabs {
+      display: flex; gap: .5rem; margin-bottom: 1.4rem;
+    }
+    .guide-tab {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      color: var(--text-2);
+      padding: .5rem 1rem;
+      border-radius: 8px;
+      font-size: .8rem; font-weight: 600;
+      cursor: pointer; transition: all .18s;
+      font-family: inherit;
+    }
+    .guide-tab:hover { background: var(--surface-2); color: var(--text-1); }
+    .guide-tab.active {
+      background: linear-gradient(135deg, var(--blue), #2563eb);
+      border-color: transparent; color: var(--white);
+      box-shadow: 0 4px 14px var(--blue-glow);
+    }
+
+    .guide-tab-content { display: none; }
+    .guide-tab-content.active { display: block; animation: screenIn .3s both; }
+
+    /* Cards grid */
+    .guide-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    .guide-card {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.1rem 1.2rem;
+      transition: border-color .2s, transform .2s;
+    }
+    .guide-card:hover { border-color: var(--border-2); transform: translateY(-2px); }
+    .guide-card.threat { border-left: 3px solid var(--red); }
+    .guide-card-icon { font-size: 1.5rem; margin-bottom: .5rem; }
+    .guide-card-title { font-weight: 700; font-size: .9rem; color: var(--white); margin-bottom: .4rem; }
+    .guide-card-desc { font-size: .8rem; color: var(--text-2); line-height: 1.55; margin-bottom: .55rem; }
+    .guide-card-example {
+      font-size: .75rem; color: var(--red);
+      background: var(--red-dim);
+      border-radius: 6px; padding: .4rem .7rem;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Signs */
+    .guide-signs-list { display: flex; flex-direction: column; gap: .85rem; }
+    .guide-sign-item {
+      display: flex; gap: 1rem; align-items: flex-start;
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.2rem;
+    }
+    .guide-sign-item.red { border-left: 3px solid var(--red); }
+    .guide-sign-item.yellow { border-left: 3px solid var(--yellow); }
+    .guide-sign-icon { font-size: 1.4rem; flex-shrink: 0; margin-top: .1rem; }
+    .guide-sign-title { font-weight: 700; font-size: .88rem; color: var(--white); margin-bottom: .3rem; }
+    .guide-sign-desc { font-size: .8rem; color: var(--text-2); line-height: 1.55; }
+
+    /* Protect */
+    .guide-protect-grid {
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      gap: 1rem; margin-bottom: 1.5rem;
+    }
+    .guide-protect-card {
+      background: var(--surface-1);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.1rem;
+      transition: border-color .2s, transform .2s;
+      position: relative;
+    }
+    .guide-protect-card:hover { border-color: var(--green); transform: translateY(-2px); }
+    .guide-protect-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: .7rem; color: var(--text-3);
+      margin-bottom: .35rem;
+    }
+    .guide-protect-icon { font-size: 1.4rem; margin-bottom: .4rem; }
+    .guide-protect-title { font-weight: 700; font-size: .85rem; color: var(--white); margin-bottom: .35rem; }
+    .guide-protect-desc { font-size: .78rem; color: var(--text-2); line-height: 1.55; }
+
+    /* Emergency */
+    .guide-emergency {
+      background: var(--red-dim);
+      border: 1px solid rgba(255,61,90,.25);
+      border-radius: var(--radius);
+      padding: 1.1rem 1.25rem;
+    }
+    .guide-emergency-title { font-weight: 700; color: var(--red); margin-bottom: .9rem; font-size: .9rem; }
+    .guide-emergency-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: .75rem;
+    }
+    .guide-emergency-item { text-align: center; }
+    .guide-emergency-label { font-size: .72rem; color: var(--text-2); margin-bottom: .25rem; }
+    .guide-emergency-val { font-weight: 700; color: var(--white); font-size: .82rem; }
+  </style>
+</head>
+<body>
+
+<!-- Animated background canvas -->
+<canvas id="bg-canvas"></canvas>
+
+<!-- Floating threat icons -->
+<div class="threat-float" style="left:8%;animation-delay:0s;animation-duration:14s">🎣</div>
+<div class="threat-float" style="left:22%;animation-delay:3s;animation-duration:11s">⚠️</div>
+<div class="threat-float" style="left:65%;animation-delay:1.5s;animation-duration:13s">🔐</div>
+<div class="threat-float" style="left:80%;animation-delay:5s;animation-duration:10s">🎣</div>
+<div class="threat-float" style="left:45%;animation-delay:7s;animation-duration:15s">⛔</div>
+<div class="threat-float" style="left:90%;animation-delay:2s;animation-duration:12s">🔓</div>
+
+<!-- ===== NAVIGATION ===== -->
+<nav>
+  <div class="logo">
+    <div class="logo-icon">🎣</div>
+    Phishing Quiz &nbsp;<span style="font-size:.65rem;color:var(--text-3);font-weight:400;letter-spacing:.04em">| Фишинг тест</span>
+  </div>
+  <div class="nav-right">
+    <button class="nav-btn" onclick="openGuideModal()">🛡️Зөвлөмж</button>
+    <button class="nav-btn" onclick="showScreen('leaderboard-screen')">👑Топ оноо</button>
+    <button class="nav-btn nav-btn-primary" onclick="showScreen('login-screen')">🔄 Дахин эхлэх</button>
+  </div>
+</nav>
+
+<!-- ===== ЗӨВЛӨМЖ MODAL ===== -->
+<div id="guide-modal" class="guide-modal-overlay" onclick="closeGuideModalOutside(event)">
+  <div class="guide-modal">
+    <div class="guide-modal-header">
+      <div class="guide-modal-title">Фишинг халдлагын төрөл ба Хамгаалах арга</div>
+      <button class="guide-close-btn" onclick="closeGuideModal()">✕</button>
+    </div>
+    <div class="guide-modal-body">
+
+      <!-- Intro -->
+      <div class="guide-intro">
+        <p>Фишинг халдлага нь луйварчид жинхэнэ байгууллагыг дуурайн таны нэвтрэх мэдээлэл, банкны мэдээлэл, хувийн мэдээллийг хулгайлах гэж оролддог кибер халдлагын нэг арга юм..</p>
+        <div style="margin-top:.75rem;padding:.65rem 1rem;background:rgba(6,214,245,.06);border-left:3px solid var(--cyan);border-radius:0 8px 8px 0;font-size:.8rem;color:var(--text-3)">
+          📖 <strong style="color:var(--cyan)">Эх сурвалж:</strong> APWG Phishing Activity Trends Report Q4 2024 · Proofpoint State of the Phish 2025 · ШУТИС Кибер Аюулгүй Байдлын Судалгааны Тайлан 2025
+        </div>
+      </div>
+
+      <!-- Tabs -->
+      <div class="guide-tabs">
+        <button class="guide-tab active" onclick="switchGuideTab('types')">🎭 Халдлагын Ангилал</button>
+        <button class="guide-tab" onclick="switchGuideTab('signs')">🔍 Таних Шинж</button>
+        <button class="guide-tab" onclick="switchGuideTab('protect')">🔐 Хамгаалах Арга</button>
+      </div>
+
+      <!-- Tab: Халдлагын Төрлүүд -->
+      <div id="guide-tab-types" class="guide-tab-content active">
+        <div class="guide-grid">
+
+          <div class="guide-card threat">
+            <div class="guide-card-icon">📧</div>
+            <div class="guide-card-title">Имэйл Фишинг</div>
+            <div class="guide-card-desc">Хамгийн нийтлэг арга. Луйварчид банк, технологийн компани, засгийн газрыг дуурайсан имэйл илгээж, линк дарахад хуурамч вэбсайт руу чиглүүлдэг.</div>
+            <div class="guide-card-example">Жишээ: "PayPal акаунт хязгаарлагдсан — яаралтай баталгаажуул!"</div>
+          </div>
+
+          <div class="guide-card threat">
+            <div class="guide-card-icon">🎯</div>
+            <div class="guide-card-title">Спир Фишинг (Spear Phishing)</div>
+            <div class="guide-card-desc">Тодорхой хүн эсвэл байгууллагыг онилсон нарийн халдлага. Луйварчид урьдчилан мэдээлэл цуглуулж, итгэмжтэй харагдах имэйл бичдэг.</div>
+            <div class="guide-card-example">Жишээ: Таны нэр, ажлын газрыг ашиглан ажлын имэйл дуурайх.</div>
+          </div>
+
+          <div class="guide-card threat">
+            <div class="guide-card-icon">📱</div>
+            <div class="guide-card-title">Смишинг (Smishing)</div>
+            <div class="guide-card-desc">SMS буюу мессежээр дамжуулан хийдэг фишинг. "Таны багц хүргэгдэхгүй байна, линк дарна уу" гэх мессежүүд нийтлэг.</div>
+            <div class="guide-card-example">Жишээ: "XYZ банкнаас: Картаа баталгаажуулна уу → [хуурамч линк]"</div>
+          </div>
+
+          <div class="guide-card threat">
+            <div class="guide-card-icon">📞</div>
+            <div class="guide-card-title">Вишинг (Vishing)</div>
+            <div class="guide-card-desc">Утсаар залгаж банкны ажилтан, цагдаа, техникийн дэмжлэг гэж өөрийгөө танилцуулан мэдээлэл авдаг халдлага.</div>
+            <div class="guide-card-example">Жишээ: "Бид Microsoft-аас байна — таны компьютерт вирус илэрлээ!"</div>
+          </div>
+
+          <div class="guide-card threat">
+            <div class="guide-card-icon">🌐</div>
+            <div class="guide-card-title">Клоун Фишинг (Clone Phishing)</div>
+            <div class="guide-card-desc">Жинхэнэ имэйлийн яг хуулбарыг үүсгэж, зөвхөн линкийг хуурамч URL-ээр солих арга. Маш ухаалаг учир илрүүлэхэд хэцүү.</div>
+            <div class="guide-card-example">Жишээ: GitHub-ийн жинхэнэ мэдэгдлийн хуулбар — зөвхөн линк хуурамч.</div>
+          </div>
+
+          <div class="guide-card threat">
+            <div class="guide-card-icon">🎁</div>
+            <div class="guide-card-title">Шагналын Луйвар</div>
+            <div class="guide-card-desc">Тохиолын шагнал, үнэгүй бэлэг, хожлого гэж татан оролцуулж хувийн мэдээлэл цуглуулах арга. Тоглоомын хэрэглэгчдийг онилж байдаг.</div>
+            <div class="guide-card-example">Жишээ: "10,000 Robux хожлоо — акаунтаа баталгаажуул!"</div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Tab: Таних Шинж -->
+      <div id="guide-tab-signs" class="guide-tab-content">
+        <div class="guide-signs-list">
+
+          <div class="guide-sign-item red">
+            <div class="guide-sign-icon">🔗</div>
+            <div>
+              <div class="guide-sign-title">Сэжигтэй домэйн / URL</div>
+              <div class="guide-sign-desc">paypal.com биш paypa<strong>1</strong>-verify.com, apple.com биш apple-id-secure.<strong>net</strong> зэрэг жижиг өөрчлөлт оруулсан хаягуудыг анхаар. Дарахаасаа өмнө хулгана дээр хөвөөрэй.</div>
+            </div>
+          </div>
+
+          <div class="guide-sign-item red">
+            <div class="guide-sign-icon">⏰</div>
+            <div>
+              <div class="guide-sign-title">Хэт яаралтай байдал ба аюул заналхийлэл</div>
+              <div class="guide-sign-desc">"24 цагийн дотор", "Яаралтай", "Акаунт хаагдана" гэх хэл нь таныг шалгалгүй дарахад хүргэх зориуд ашигладаг арга. Жинхэнэ байгууллага ийм хэл ашигладаггүй.</div>
+            </div>
+          </div>
+
+          <div class="guide-sign-item red">
+            <div class="guide-sign-icon">🔑</div>
+            <div>
+              <div class="guide-sign-title">Нууц мэдээлэл нэхэх</div>
+              <div class="guide-sign-desc">Банк, засгийн газар, технологийн компани хэзээ ч имэйлээр нууц үг, PIN, карт дугаар, иргэний дугаар асуудаггүй.</div>
+            </div>
+          </div>
+
+          <div class="guide-sign-item yellow">
+            <div class="guide-sign-icon">✍️</div>
+            <div>
+              <div class="guide-sign-title">Алдаатай монгол / орчуулга</div>
+              <div class="guide-sign-desc">Дутуу орчуулга, буруу өгүүлбэр бүтэц, хачирхалтай үг хэллэг нь машин орчуулгаас гаралтай байдаг — халдлагын шинж.</div>
+            </div>
+          </div>
+
+          <div class="guide-sign-item yellow">
+            <div class="guide-sign-icon">📨</div>
+            <div>
+              <div class="guide-sign-title">Хүлээгдэхгүй имэйл</div>
+              <div class="guide-sign-desc">Та хэзээ ч захиалаагүй зүйлийн тухай мэдэгдэл, ямар нэг шагнал хожсон мэдэгдэл, эсвэл сэжигтэй хавсралт бүхий имэйл ирвэл болгоомжлоорой.</div>
+            </div>
+          </div>
+
+          <div class="guide-sign-item yellow">
+            <div class="guide-sign-icon">👤</div>
+            <div>
+              <div class="guide-sign-title">Ерөнхий хандалт</div>
+              <div class="guide-sign-desc">"Хүндэт хэрэглэгч" гэх ерөнхий хандалт нь жинхэнэ имэйлд байдаггүй — жинхэнэ байгууллага таны нэрийг мэддэг.</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Tab: Хамгаалах Арга -->
+      <div id="guide-tab-protect" class="guide-tab-content">
+        <div class="guide-protect-grid">
+
+          <div class="guide-protect-card">
+            <div class="guide-protect-num">01</div>
+            <div class="guide-protect-icon">🔐</div>
+            <div class="guide-protect-title">2 Хүчин зүйлийн баталгаажуулалт</div>
+            <div class="guide-protect-desc">Бүх чухал акаунтдаа 2FA идэвхжүүл. Нууц үг алдагдсан ч хулгайч нэвтрэх боломжгүй болно.</div>
+          </div>
+
+          <div class="guide-protect-card">
+            <div class="guide-protect-num">02</div>
+            <div class="guide-protect-icon">🔗</div>
+            <div class="guide-protect-title">URL шалгах</div>
+            <div class="guide-protect-desc">Линк дарахаасаа өмнө хулганаа хөвүүлж URL-ийг шалга. Банк, засгийн газрын вэбсайтад шууд хаяг бич.</div>
+          </div>
+
+          <div class="guide-protect-card">
+            <div class="guide-protect-num">03</div>
+            <div class="guide-protect-icon">🧠</div>
+            <div class="guide-protect-title">Нууц үгийн менежер</div>
+            <div class="guide-protect-desc">1Password, Bitwarden зэрэг нууц үгийн менежер ашиглаарай. Жинхэнэ сайтад л нууц үгийг автоматаар оруулна.</div>
+          </div>
+
+          <div class="guide-protect-card">
+            <div class="guide-protect-num">04</div>
+            <div class="guide-protect-icon">📲</div>
+            <div class="guide-protect-title">Шууд холбоо барих</div>
+            <div class="guide-protect-desc">Банк, цагдаагаас имэйл ирвэл имэйлийн линк бүү дар. Тухайн байгууллагын байнгын утасны дугаарт залгаж шалга.</div>
+          </div>
+
+          <div class="guide-protect-card">
+            <div class="guide-protect-num">05</div>
+            <div class="guide-protect-icon">🛡️</div>
+            <div class="guide-protect-title">Програм хангамж шинэчлэх</div>
+            <div class="guide-protect-desc">Үйлдлийн систем, браузер, антивирус програмаа тогтмол шинэчлэн байгаарай. Шинэчлэлт нь мэдэгдсэн эмзэг байдлыг засдаг.</div>
+          </div>
+
+          <div class="guide-protect-card">
+            <div class="guide-protect-num">06</div>
+            <div class="guide-protect-icon">🚨</div>
+            <div class="guide-protect-title">Мэдэгдэх & Блоклох</div>
+            <div class="guide-protect-desc">Фишинг имэйл ирвэл спам гэж тэмдэглэж, байгууллагын аюулгүй байдлын баг болон Монголын цахим гэмт хэргийн газарт мэдэгдээрэй.</div>
+          </div>
+
+        </div>
+
+        <!-- Emergency contacts -->
+        <div class="guide-emergency">
+          <div class="guide-emergency-title">🆘 Яаралтай холбоо барих</div>
+          <div class="guide-emergency-grid">
+            <div class="guide-emergency-item">
+              <div class="guide-emergency-label">Цахим гэмт хэрэг</div>
+              <div class="guide-emergency-val">📞 102</div>
+            </div>
+            <div class="guide-emergency-item">
+              <div class="guide-emergency-label">MNCERT</div>
+              <div class="guide-emergency-val">📞 7000-1113</div>
+            </div>
+            <div class="guide-emergency-item">
+              <div class="guide-emergency-label">Кибер аюулгүй байдлын газар</div>
+              <div class="guide-emergency-val">📞 113</div>
+            </div>
+            <div class="guide-emergency-item">
+              <div class="guide-emergency-label">ЛББТ / бусад</div>
+              <div class="guide-emergency-val">📞 Банкны арын хэсэг</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end guide-modal-body -->
+  </div>
+</div>
+
+<main>
+
+<!-- ===== 1. LOGIN ===== -->
+ <center>
+<div id="login-screen" class="screen active">
+
+  <!-- Academic thesis banner -->
+  <div style="background:linear-gradient(90deg,rgba(26,108,246,.12),rgba(6,214,245,.08));border-bottom:1px solid rgba(6,214,245,.15);padding:.65rem 2rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--text-3);letter-spacing:.04em">
+   <div style="display:flex; justify-content:flex-end;">
+     <span>
+        🎓 <strong style="color:var(--text-2)">Веб сайт зорилго</strong> · 
+          Хэрэглэгчдийн фишинг халдлагыг таних чадварыг сайжруулах оршино.
+     </span>
+   </div>
+    <span style="display:flex;gap:1.5rem">
+      <strong style="color:var(--text-2)">2026 он</strong>
+    </span>
+  </div>
+
+  <div class="hero">
+    <div class="hero-glow hero-glow-1"></div>
+    <div class="hero-glow hero-glow-2"></div>
+    <div class="hero-glow hero-glow-3"></div>
+    <div class="scan-line"></div>
+    <div class="hero-emails" id="hero-emails"></div>
+
+    <!-- LEFT: Badge + Title + Card -->
+    <div class="hero-left">
+      <div class="hero-badge">
+        <div class="badge-dot"></div>
+        ШУТИС · Кибер аюулгүй байдлын тэнхим · 2026
+      </div>
+
+      <h1 class="hero-title">Фишинг<br>Илрүүлэх<br><span class="accent">Вэб Сайт</span></h1>
+      <p class="hero-sub">Жинхэнэ имэйл болон фишинг халдлагыг ялган таних чадвараа шалгаарай. </p>
+
+      <!-- Stats -->
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-num">3<span> бүлэг</span></div>
+          <div class="hero-stat-label">Насны сегмент</div>
+        </div>
+        <div class="hero-stat-divider"></div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">30<span>+</span></div>
+          <div class="hero-stat-label">Туршилтын сценари</div>
+        </div>
+        <div class="hero-stat-divider"></div>
+        <div class="hero-stat">
+          <div class="hero-stat-num">10</div>
+          <div class="hero-stat-label">Асуулт · 20 сек</div>
+        </div>
+      </div>
+
+      <!-- Threat ticker -->
+      <div class="threat-ticker">
+        <span class="ticker-label">LIVE</span>
+        <span class="ticker-text">PayPal луйвар · &nbsp;Apple ID хулгай · Microsoft техник дэмжлэгийн луйвар · Монгол банкны фишинг · Amazon хүргэлтийн луйвар · Roblox Robux луйвар &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; PayPal луйвар · Apple ID хулгай · Microsoft техник дэмжлэгийн луйвар</span>
+      </div>
+
+      <div class="login-card">
+        <!-- STEP 1: Name -->
+        <div id="step-name">
+          <!-- Academic header -->
+          <div style="background:var(--surface-1);border:1px solid var(--border);border-radius:10px;padding:.75rem 1rem;margin-bottom:1.25rem;font-size:.75rem;color:var(--text-3);line-height:1.5">
+            📋 <strong style="color:var(--text-2)">НЭВТРЭХ</strong><br>
+            
+          </div>
+          <label class="input-label" for="username-input">
+            <span>👤</span> ОРОЛЦОГЧ НЭРЭЭ ОРУУЛНА УУ.
+          </label>
+          <input type="text" id="username-input" class="username-input"
+                 placeholder="Нэр эсвэл хоч оруулна уу..." maxlength="20"
+                 onkeydown="if(event.key==='Enter') goToAgeStep()" />
+          <div id="login-error" class="login-error">⚠️ Нэрээ оруулна уу!</div>
+          <button class="btn-start" onclick="goToAgeStep()">Үргэлжлүүлэх  →</button>
+          <div class="login-meta">
+            <span>⏱ 10 асуулт</span>
+            <span>⚡ 20 сек/асуулт</span>
+            <span>🔒 Дахин өгөх</span>
+          </div>
+        </div>
+
+        <!-- STEP 2: Age group -->
+        <div id="step-age" style="display:none">
+          <div class="step-back-btn" onclick="backToName()">← Буцах</div>
+          <label class="input-label"><span>🎂</span> НАСНЫ БҮЛЭГ</label>
+          <div class="age-greeting" id="age-greeting"></div>
+          <div class="age-grid">
+            <button class="age-btn" onclick="selectAge('6-18')" data-age="6-18">
+              <span class="age-icon">🧒</span>
+              <span class="age-range">6 – 18</span>
+              <span class="age-label">Өсвөр нас</span>
+            </button>
+            <button class="age-btn" onclick="selectAge('18-35')" data-age="18-35">
+              <span class="age-icon">👨‍💻</span>
+              <span class="age-range">18 – 35</span>
+              <span class="age-label">Залуу нас</span>
+            </button>
+            <button class="age-btn" onclick="selectAge('35-60')" data-age="35-60">
+              <span class="age-icon">👔</span>
+              <span class="age-range">35 – 60+</span>
+              <span class="age-label">Насанд хүрэгчид</span>
+            </button>
+          </div>
+          <div id="age-error" class="login-error">⚠️ Насны бүлгээ сонгоно уу!</div>
+          <button class="btn-start" onclick="startQuiz()">🔬 &nbsp;Туршилт эхлэх</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Live threat feed + info cards -->
+    <div class="hero-right">
+      <div class="hero-right-title">Монгол дахь кибер аюулгүй байдлын судалгааны контекст</div>
+
+      <div class="live-email-feed" id="live-feed"></div>
+
+      <!-- Attack counter -->
+      <div class="attack-counter">
+        <div>
+          <div class="attack-counter-num" id="attack-num">0</div>
+          <div class="attack-bar"><div class="attack-bar-fill"></div></div>
+        </div>
+        <div class="attack-counter-info">
+          <div class="attack-counter-label">🎯 Дэлхийд өнөөдөр илрүүлсэн фишинг</div>
+          <div class="attack-counter-sub">Эх сурвалж: APWG · 2025 оны тайлан</div>
+        </div>
+      </div>
+
+      <!-- Phishing types mini grid -->
+      <div class="hero-right-title" style="margin-top:.25rem">Халдлагын үндсэн төрлүүд</div>
+      <div class="phish-types">
+        <div class="phish-type-card">
+          <span class="phish-type-icon">📧</span>
+          <div>
+            <div class="phish-type-name">Имэйл</div>
+            <div class="phish-type-desc">Хамгийн нийтлэг</div>
+          </div>
+        </div>
+        <div class="phish-type-card">
+          <span class="phish-type-icon">📱</span>
+          <div>
+            <div class="phish-type-name">Смишинг</div>
+            <div class="phish-type-desc">SMS халдлага</div>
+          </div>
+        </div>
+        <div class="phish-type-card">
+          <span class="phish-type-icon">📞</span>
+          <div>
+            <div class="phish-type-name">Вишинг</div>
+            <div class="phish-type-desc">Утасны луйвар</div>
+          </div>
+        </div>
+        <div class="phish-type-card">
+          <span class="phish-type-icon">🎯</span>
+          <div>
+            <div class="phish-type-name">Спир</div>
+            <div class="phish-type-desc">Онилсон халдлага</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rotating Facts Ticker -->
+      <div id="fact-ticker" style="background:var(--cyan-dim);border:1px solid rgba(6,214,245,.3);border-radius:10px;padding:.85rem 1rem;font-size:.78rem;color:var(--text-2);line-height:1.6;position:relative;overflow:hidden;min-height:56px">
+        <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);animation:scanDown 4s linear infinite;opacity:.5"></div>
+        <div id="fact-text" style="transition:opacity .4s ease">
+          💡 <strong style="color:var(--cyan)">Мэдэх үү?</strong> <span id="fact-content">Фишинг имэйлүүдийн <strong style="color:var(--white)">91%</strong> нь кибер халдлагын эхлэл болдог. Домэйн нэрийг үргэлж шалга!</span>
+        </div>
+        <div style="display:flex;gap:4px;margin-top:.5rem;justify-content:flex-end" id="fact-dots"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</center>
+
+<!-- ===== 2. QUIZ ===== -->
+<div id="quiz-screen" class="screen">
+  <div class="quiz-topbar">
+    <div class="player-tag">
+      <span>👤</span>
+      <span id="display-username">Тоглогч</span>
+      <span class="age-badge-tag" id="age-badge"></span>
+    </div>
+    <div class="timer-wrap">
+      <div class="timer-ring" id="timer-ring">
+        <svg viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+          <circle class="timer-bg" cx="22" cy="22" r="18"/>
+          <circle class="timer-fg" id="timer-circle" cx="22" cy="22" r="18"/>
+        </svg>
+        <span id="timer-text" class="timer-text">20</span>
+      </div>
+    </div>
+    <div class="score-pill">
+      ⭐ <span class="s-num" id="live-score">0</span>/<span id="live-total">0</span>
+    </div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-steps" id="progress-steps"></div>
+    <div class="step-label">
+      <span id="q-num">1</span>/10
+    </div>
+  </div>
+
+  <div class="quiz-layout">
+    <div class="email-client" id="email-client">
+      <!-- OS Window chrome -->
+      <div class="window-chrome">
+        <div class="wc-dots">
+          <div class="wc-dot r"></div>
+          <div class="wc-dot y"></div>
+          <div class="wc-dot g"></div>
+        </div>
+        <div class="wc-url">
+          <span class="lock">🔒</span>
+          <span id="wc-url-text">mail.client.app/inbox</span>
+        </div>
+        <div class="wc-badge" id="q-indicator">01 / 10</div>
+      </div>
+
+      <!-- Email layout -->
+      <div class="email-layout">
+        <!-- Sidebar -->
+        <div class="email-sidebar">
+          <div class="sidebar-header">
+            <div class="sidebar-header-logo">
+              <!-- Gmail M logo SVG -->
+              <svg class="gmail-m" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+                <rect width="28" height="28" rx="4" fill="white"/>
+                <path d="M3 8.5V21h3.5V13l7.5 5.5 7.5-5.5v8H25V8.5L14 16.5 3 8.5z" fill="#EA4335"/>
+                <path d="M3 8.5L14 16.5 25 8.5" fill="none" stroke="#EA4335" stroke-width="1"/>
+                <path d="M3 8.5h22v13H3z" fill="none"/>
+                <path d="M3 8.5L3 21h3.5V13l7.5 5.5" fill="#EA4335"/>
+                <path d="M25 8.5L25 21h-3.5V13l-7.5 5.5" fill="#C5221F"/>
+                <path d="M3 8.5L14 16.5 25 8.5 22.5 6.5H5.5L3 8.5z" fill="#EA4335"/>
+                <path d="M5.5 6.5H3L3 8.5L14 16.5" fill="#EA4335"/>
+                <path d="M22.5 6.5H25L25 8.5L14 16.5" fill="#C5221F"/>
+              </svg>
+              <span style="font-size:1.1rem;font-weight:400;color:#444;letter-spacing:-.01em">Gmail</span>
+            </div>
+          </div>
+          <div class="sidebar-compose">
+            <span style="font-size:1.1rem">✏️</span> Имэйл бичих
+          </div>
+          <div class="sidebar-item active">
+            <span>📥</span> Ирсэн имэйл
+            <span class="si-badge">715</span>
+          </div>
+          <div class="sidebar-item"><span>⭐</span> Одтой</div>
+          <div class="sidebar-item"><span>🕐</span> Түр хойшлуулсан</div>
+          <div class="sidebar-item"><span>➤</span> Илгээсэн</div>
+          <div class="sidebar-item"><span>📄</span> Ноорог <span class="si-badge">15</span></div>
+          <div style="border-top:1px solid #e0e0e0;margin:.5rem .75rem .5rem 0"></div>
+          <div class="sidebar-item"><span>🛍️</span> Худалдан авалтууд <span class="si-badge">4</span></div>
+          <div class="sidebar-item"><span>✈️</span> Аялал</div>
+        </div>
+
+        <!-- Main email content -->
+        <div class="email-main">
+          <div id="email-display"></div>
+          <div id="feedback-box" class="feedback-panel"></div>
+          <button id="btn-next" class="btn-next" onclick="nextQuestion()">Дараагийн асуулт →</button>
+          <div class="action-row" id="action-row">
+            <button class="btn-action btn-phish" onclick="answer('phish')">🎣 &nbsp;Фишинг халдлага</button>
+            <button class="btn-action btn-legit" onclick="answer('legit')">✅ &nbsp;Жинхэнэ имэйл</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 3. RESULTS ===== -->
+<div id="results-screen" class="screen">
+  <div class="results-screen-inner">
+    <div class="results-hero">
+      <div class="score-orbit" id="score-orbit">
+        <svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">
+          <circle class="orbit-bg" cx="80" cy="80" r="66"/>
+          <circle class="orbit-fg" id="orbit-fg" cx="80" cy="80" r="66" stroke="url(#scoreGrad)"/>
+          <defs>
+            <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#06d6f5"/>
+              <stop offset="100%" stop-color="#1a6cf6"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div class="score-inner">
+          <div class="score-big" id="score-display">0</div>
+          <div class="score-of">/ 10</div>
+        </div>
+      </div>
+      <div class="res-title" id="result-title"></div>
+      <div class="res-sub" id="result-sub"></div>
+      <div class="res-meta">
+        <span>👤 <span id="result-username"></span></span>
+        <span>⏱ Нийт: <span id="result-time"></span>с</span>
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-num" id="stat-correct" style="color:var(--green)">0</div>
+        <div class="stat-label">✅ Зөв ангилал</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-wrong" style="color:var(--red)">0</div>
+        <div class="stat-label">❌ Буруу ангилал</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-phish-caught" style="color:var(--blue-2)">0</div>
+        <div class="stat-label">🎣 Фишинг таних</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-time-avg" style="color:var(--yellow)">0с</div>
+        <div class="stat-label">⚡ Дундаж хариулах хугацаа</div>
+      </div>
+    </div>
+
+    <!-- Research note -->
+    <div style="background:rgba(26,108,246,.06);border:1px solid rgba(26,108,246,.18);border-radius:12px;padding:1rem 1.25rem;margin:0 auto 1.5rem;max-width:680px;font-size:.78rem;color:var(--text-2);line-height:1.65;font-family:'JetBrains Mono',monospace">
+      📋 <strong style="color:var(--blue-2)">Судалгааны тэмдэглэл</strong><br>
+      Таны хариулт ШУТИС-ийн дипломын ажлын өгөгдлийн санд нэрийгүй хэлбэрээр хадгалагдана. Насны бүлэг болон хариулах хугацааны дунджийг фишинг илрүүлэх чадварын регрессийн загварт ашиглана. Эх сурвалж: APWG 2025, Proofpoint Threat Report 2024.
+    </div>
+
+    <div class="detail-panel">
+      <div class="detail-head">// ТУРШИЛТЫН ДЭЛГЭРЭНГҮЙ ҮР ДҮН</div>
+      <div id="answer-history"></div>
+    </div>
+
+      <div class="result-btns">
+        <button class="btn-restart" onclick="restartSameUser()">↩ Дахин туршилт хийх</button>
+        <button class="btn-leaderboard" onclick="showScreen('leaderboard-screen')">👑 Авсан оноо харах</button>
+        <button class="btn-leaderboard" style="background:linear-gradient(135deg,rgba(6,214,245,.15),rgba(26,108,246,.15));border-color:rgba(6,214,245,.3);color:var(--cyan)" onclick="showDashboard()">📈 Аналитик харах</button>
+      </div>
+  </div>
+</div>
+
+<!-- ===== 4. LEADERBOARD ===== -->
+<div id="leaderboard-screen" class="screen">
+  <div class="lb-screen">
+    <div class="lb-header">
+      <div class="lb-title">Авсан оноо</div>
+      <div class="lb-sub">Оролцогчдын фишинг илрүүлэх чадварын хэмжилт · ШУТИС ДА-2026</div>
+    </div>
+    <div class="lb-panel">
+      <div class="lb-top3" id="lb-top3"></div>
+      <div class="lb-divider"></div>
+      <div id="leaderboard-list"></div>
+      <div id="leaderboard-empty" class="lb-empty" style="display:none">
+        Одоохондоо судалгааны өгөгдөл байхгүй байна. Эхлээд туршилт хийнэ үү! 🔬
+      </div>
+    </div>
+    <div class="lb-actions">
+      <button class="btn-back" onclick="goBack()">← Буцах</button>
+      <button class="btn-clear" onclick="clearLeaderboard()">🗑️ Өгөгдөл цэвэрлэх</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 5. ANALYTICS DASHBOARD ===== -->
+<div id="dashboard-screen" class="screen">
+  <div class="dash-screen-inner">
+    <div class="dash-header">
+      <div class="dash-title">📈 Аналитик Тайлан</div>
+      <div class="dash-sub">// Таны туршилтын үр дүнгийн нарийвчилсан шинжилгээ · ШУТИС ДА-2026</div>
+    </div>
+
+    <!-- KPI row -->
+    <div class="kpi-row" id="dash-kpi"></div>
+
+    <!-- Charts grid -->
+    <div class="dash-grid">
+      <!-- Accuracy by type -->
+      <div class="dash-card">
+        <div class="dash-card-title">📧 Имэйлийн төрлөөр үнэлгээ</div>
+        <div class="bar-chart" id="dash-type-chart"></div>
+      </div>
+
+      <!-- Phish vs Legit donut -->
+      <div class="dash-card">
+        <div class="dash-card-title">🥧 Ангилалын харьцаа</div>
+        <div class="donut-wrap">
+          <svg class="donut-svg" width="100" height="100" viewBox="0 0 100 100">
+            <circle id="donut-bg" cx="50" cy="50" r="38" fill="none" stroke="var(--surface-2)" stroke-width="16"/>
+            <circle id="donut-phish" cx="50" cy="50" r="38" fill="none" stroke="var(--red)" stroke-width="16"
+              stroke-dasharray="0 239" stroke-dashoffset="60" stroke-linecap="round"
+              style="transition:stroke-dasharray 1s cubic-bezier(.22,.68,0,1.2);transform:rotate(-90deg);transform-origin:50px 50px"/>
+            <circle id="donut-legit" cx="50" cy="50" r="38" fill="none" stroke="var(--green)" stroke-width="16"
+              stroke-dasharray="0 239" stroke-dashoffset="60" stroke-linecap="round"
+              style="transition:stroke-dasharray 1.2s cubic-bezier(.22,.68,0,1.2) .1s;transform:rotate(-90deg);transform-origin:50px 50px"/>
+          </svg>
+          <div class="donut-legend" id="dash-donut-legend"></div>
+        </div>
+      </div>
+
+      <!-- Response time per question -->
+      <div class="dash-card dash-card-full">
+        <div class="dash-card-title">⏱ Асуулт бүрийн хариулах хугацаа (секунд)</div>
+        <div class="time-chart" id="dash-time-chart"></div>
+      </div>
+
+      <!-- Difficulty breakdown -->
+      <div class="dash-card">
+        <div class="dash-card-title">🎯 Хүндрэлийн түвшнээр</div>
+        <div class="bar-chart" id="dash-diff-chart"></div>
+      </div>
+
+      <!-- Score percentile -->
+      <div class="dash-card">
+        <div class="dash-card-title">📊 Оноо болон үнэлгээ</div>
+        <div id="dash-score-analysis" style="font-size:.82rem;color:var(--text-2);line-height:1.8"></div>
+      </div>
+    </div>
+
+    <!-- Deep analysis per question -->
+    <div class="dash-card" style="margin-bottom:1rem">
+      <div class="dash-card-title">🔬 Асуулт бүрийн дэлгэрэнгүй шинжилгээ</div>
+      <div class="analysis-panel" style="margin-top:.75rem;border:none">
+        <div id="dash-deep-analysis"></div>
+      </div>
+    </div>
+
+    <div class="dash-actions">
+      <button class="btn-csv" onclick="exportCSV()">⬇️ CSV татаж авах</button>
+      <button class="btn-dash-back" onclick="showScreen('results-screen')">← Үр дүн рүү буцах</button>
+      <button class="btn-dash-back" onclick="showScreen('leaderboard-screen')">📊 Нийт оролцогчид</button>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<footer style="text-align:center;padding:1.5rem 2rem;border-top:1px solid var(--border);font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--text-3);line-height:1.8;position:relative;z-index:10">
+  <div style="margin-bottom:.35rem">
+    🎓 <strong style="color:var(--text-2)">Шинжлэх Ухаан Технологийн Их Сургууль</strong> · Мэдээлэл, Харилцаа Холбооны Технологийн Сургууль · Компьютерийн Ухааны Тэнхим
+  </div>
+  <div>
+    Дипломын ажил: <em style="color:var(--cyan)">"Монгол хэрэглэгчдийн фишинг имэйл илрүүлэх чадварт насны бүлгийн нөлөөллийн судалгаа"</em>
+  </div>
+  <div style="margin-top:.3rem;color:var(--text-3)">
+    Судлаач: Б.Билгүүн &nbsp;|&nbsp; Удирдагч: Д.Мөнхбат &nbsp;|&nbsp; 2025–2026 оны хичээлийн жил &nbsp;|&nbsp; Бүх эрх хуулиар хамгаалагдсан
+  </div>
+</footer>
+
+<script src="script.js"></script>
+</script>
+
+<!-- Firebase module (optional) -->
+<script type="module" src="firebase.js" onerror="console.log('Firebase not loaded, using localStorage')"></script>
+</body>
+</html>
