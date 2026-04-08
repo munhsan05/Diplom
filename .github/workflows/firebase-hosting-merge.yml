@@ -1,5 +1,4 @@
 name: Deploy to Firebase Hosting on merge
-
 on:
   push:
     branches:
@@ -11,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Build алхам алгасах
+      # Build алхам алгасах (статик сайт тул хэрэггүй)
       - run: echo "No build step needed"
 
       - uses: FirebaseExtended/action-hosting-deploy@v0
@@ -19,4 +18,4 @@ jobs:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DIPLOM_7EE78 }}
           projectId: diplom-7ee78
-          channelId: pr9-main
+          channelId: live
