@@ -7,6 +7,23 @@
    ============================================ */
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
+<<<<<<< HEAD
+=======
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  getDocs,
+  query,
+  orderBy,
+  limit,
+  where,
+  deleteDoc,
+  doc
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+>>>>>>> e04bfd9 (Add Firebase Hosting deploy workflow)
 
 /* ================================================
    1. FIREBASE ТОХИРГОО
@@ -19,8 +36,13 @@ const firebaseConfig = {
   projectId: "diplom-7ee78",
   storageBucket: "diplom-7ee78.firebasestorage.app",
   messagingSenderId: "764395799183",
+<<<<<<< HEAD
   appId: "1:764395799183:web:8f7fea15fa18a62687a6fa",
   measurementId: "G-GCJ1JGYPXB"
+=======
+  appId: "1:764395799183:web:b2122d37f4121dff87a6fa",
+  measurementId: "G-ZF2TVKPJ43"
+>>>>>>> e04bfd9 (Add Firebase Hosting deploy workflow)
 };
 
 /* ================================================
