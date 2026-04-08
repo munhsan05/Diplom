@@ -20,8 +20,33 @@ jobs:
       # Static сайт тул build хийхгүй
       - run: echo "No build step needed"
 
-      - uses: FirebaseExtended/action-hosting-deploy@v0
+      - id: auth
+        uses: google-github-actions/auth@v2
         with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DIPLOM_7EE78 }}
-          projectId: diplom-7ee78
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_DIPLOM_7EE78 }}
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Deploy to preview channel
+        id: deploy
+        run: |
+          CHANNEL_ID="pr-${{ github.event.pull_request.number }}"
+          firebase hosting:channel:deploy "$CHANNEL_ID" \
+            --expires 7d \
+            --project diplom-7ee78 \
+            --json | tee /tmp/deploy_out.json
+          URL=$(node -e "const d=JSON.parse(require('fs').readFileSync('/tmp/deploy_out.json','utf8')); const r=d.result||{}; const k=Object.keys(r)[0]; console.log(k && r[k].url ? r[k].url : '')")
+          echo "preview_url=$URL" >> $GITHUB_OUTPUT
+
+      - name: Comment preview URL on PR
+        if: steps.deploy.outputs.preview_url != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '**Firebase Hosting Preview**\n\nURL: ${{ steps.deploy.outputs.preview_url }}\n\n7 хоногийн дараа устана.'
+            })
