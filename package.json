@@ -1,14 +1,11 @@
 {
-<<<<<<< HEAD
   "name": "my-website",
   "version": "1.0.0",
   "scripts": {
     "build": "echo 'No build step needed for static site'"
   }
 }
-=======
   "dependencies": {
     "firebase": "^12.11.0"
   }
 }
->>>>>>> e04bfd9 (Add Firebase Hosting deploy workflow)
